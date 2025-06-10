@@ -1,0 +1,47 @@
+version: "1.2"
+services:
+  app:
+    image: stesha28/backend_events_app:v1.5
+    container_name: fastapi_app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis_jwt
+      - redis_cache
+    env_file: .env
+    volumes:
+      - ./static:/app/static
+
+  db:
+    image: postgres:13
+    container_name: postgres_db
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis_jwt:
+    image: redis:7-alpine
+    container_name: redis_jwt
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      
+  redis_cache:
+    image: redis:7-alpine
+    container_name: redis_cache
+    ports:
+      - "6380:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+volumes:
+  postgres_data:
+  redis_data:
+  static:
