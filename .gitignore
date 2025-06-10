@@ -134,7 +134,7 @@ dmypy.json
 
 static/
 media/
-.json
+*.json
 load_data.py
 .dockerignore
 

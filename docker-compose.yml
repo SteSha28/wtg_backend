@@ -1,7 +1,7 @@
-version: "1.2"
+version: "3.8"
 services:
   app:
-    image: stesha28/backend_events_app:v1.5
+    image: stesha28/backend_events_app:v1.7
     container_name: fastapi_app
     ports:
       - "8000:8000"
