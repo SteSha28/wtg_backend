@@ -45,6 +45,9 @@ async def get_auth_service(
     user_service: UserService = Depends(get_users_service),
     redis: Redis = Depends(get_redis_connection),
 ) -> AuthService:
+    """
+    Возвращает сервис авторизации с доступом к Redis и UserService.
+    """
     return AuthService(user_service=user_service, redis=redis)
 
 
@@ -56,6 +59,12 @@ async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     redis: Redis = Depends(get_redis_connection),
 ) -> int:
+    """
+    Проверяет токен в Redis и возвращает ID текущего пользователя.
+
+    Raises:
+        - UnauthorizedException: если токен не найден или недействителен.
+    """
     user_id = await check_token(redis, token)
     if user_id is None:
         raise exceptions.UnauthorizedException()
@@ -66,6 +75,12 @@ async def check_user_access(
     user_id: int,
     token_user_id: int = Depends(get_current_user)
 ) -> int:
+    """
+    Проверяет, совпадает ли ID пользователя в токене с целевым user_id.
+
+    Raises:
+        ForbiddenException: если доступ запрещён.
+    """
     if user_id != token_user_id:
         raise exceptions.ForbiddenException()
     return user_id
@@ -75,6 +90,12 @@ async def find_user(
     user_id: int,
     user_service: UserService,
 ):
+    """
+    Получает пользователя по ID.
+
+    Raises:
+        NotFoundException: если пользователь не найден.
+    """
     user = await user_service.get_by_id(user_id)
     if not user:
         raise exceptions.NotFoundException()
@@ -84,6 +105,13 @@ async def find_user(
 async def get_admin_user(
     token: str = Depends(oauth2_scheme),
 ):
+    """
+    Проверяет токен и возвращает пользователя-администратора.
+
+    Raises:
+        UnauthorizedException: если токен невалидный.
+        ForbiddenException: если пользователь не админ.
+    """
     redis = await get_redis_connection()
     user_id = await check_token(redis, token)
     if user_id is None:

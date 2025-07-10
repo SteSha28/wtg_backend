@@ -13,26 +13,35 @@ ModelType = TypeVar("ModelType", bound=Base)
 class AbstractRepository(ABC):
     @abstractmethod
     async def create(self, data: dict):
+        """Создать запись в базе с данными из словаря."""
         raise NotImplementedError
 
     @abstractmethod
     async def find_all(self,  offset: int, limit: int):
+        """Получить список записей с пагинацией."""
         raise NotImplementedError
 
     @abstractmethod
     async def get(self, id: int):
+        """Получить запись по ID."""
         raise NotImplementedError
 
     @abstractmethod
     async def update(self, obj, fields: dict):
+        """Обновить переданный объект новыми значениями."""
         raise NotImplementedError
 
     @abstractmethod
     async def delete(self, id: int):
+        """Удалить запись по ID."""
         raise NotImplementedError
 
 
 class Repository(AbstractRepository, Generic[ModelType]):
+    """
+    Реализация абстрактного репозитория для модели SQLAlchemy
+    с базовыми CRUD-операциями.
+    """
     model: Optional[Type[ModelType]] = None
 
     def __init__(self, session: AsyncSession):

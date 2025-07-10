@@ -8,11 +8,21 @@ from events_app.schemas import TokenResponce
 
 
 class AuthService:
+    """
+    Сервис для аутентификации пользователей и управления токенами.
+    """
     def __init__(
             self,
             user_service: UserService,
             redis: Redis,
     ):
+        """
+        Инициализация AuthService.
+
+        Args:
+            - user_service (UserService): Сервис для работы с пользователями.
+            - redis (Redis): Клиент Redis для хранения токенов.
+        """
         self.user_service = user_service
         self.redis = redis
 
@@ -20,6 +30,20 @@ class AuthService:
             self,
             form_data: OAuth2PasswordRequestForm
     ) -> TokenResponce:
+        """
+        Аутентифицирует пользователя по данным формы и возвращает JWT-токен.
+
+        Args:
+            - form_data (OAuth2PasswordRequestForm): Данные формы
+            с username и password.
+
+        Raises:
+            - ValueError: Если пользователь не найден или
+            неверные учетные данные.
+
+        Returns:
+            - TokenResponce: Объект с JWT-токеном и ID пользователя.
+        """
         user = await self.user_service.authenticate_user(
             form_data.username,
             form_data.password,

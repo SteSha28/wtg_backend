@@ -15,6 +15,14 @@ ReadUserSchema = TypeVar("ReadUserSchema", bound=schemas.BaseModel)
 
 class UserService(BaseService[CreateUserSchema, ReadUserSchema],
                   Generic[CreateUserSchema, ReadUserSchema]):
+    """
+    Сервис для работы с пользователями:
+    - получение по id, email, username
+    - создание и аутентификация
+    - обновление аватара
+    - смена пароля
+    - получение пользователя с избранным
+    """
     def __init__(self, uow_factory: Callable[[], IUnitOfWork]):
         super().__init__(uow_factory, "user", schemas.UserBase)
 
@@ -22,6 +30,7 @@ class UserService(BaseService[CreateUserSchema, ReadUserSchema],
             self,
             user_id: int,
             ) -> schemas.UserFromDB | None:
+        """Получить пользователя по ID."""
         async with self.uow_factory() as uow:
             user = await uow.user.get_by_id(user_id)
             if user:
@@ -32,6 +41,7 @@ class UserService(BaseService[CreateUserSchema, ReadUserSchema],
             self,
             email: str,
             ) -> schemas.UserBase | None:
+        """Получить пользователя по email."""
         async with self.uow_factory() as uow:
             user = await uow.user.get_by_email(email)
             if user:
@@ -42,6 +52,7 @@ class UserService(BaseService[CreateUserSchema, ReadUserSchema],
             self,
             username: str,
             ) -> schemas.UserBase | None:
+        """Получить пользователя по имени пользователя."""
         async with self.uow_factory() as uow:
             user = await uow.user.get_by_username(username)
             if user:
@@ -53,6 +64,7 @@ class UserService(BaseService[CreateUserSchema, ReadUserSchema],
             username: str,
             email: str,
             ) -> str | None:
+        """Проверить, существует ли пользователь с таким email или username."""
         async with self.uow_factory() as uow:
             if await uow.user.get_by_email(email):
                 return "Email already exists."
@@ -64,6 +76,7 @@ class UserService(BaseService[CreateUserSchema, ReadUserSchema],
             self,
             user: schemas.UserCreate,
             ) -> schemas.UserBase | str:
+        """Создать нового пользователя с хэшированием пароля."""
         hashed_pwd = hash_password(user.password)
         user_data = user.model_dump()
         user_data['hashed_password'] = hashed_pwd
@@ -82,6 +95,8 @@ class UserService(BaseService[CreateUserSchema, ReadUserSchema],
             email: str,
             password: str,
             ) -> int | None:
+        """Проверить email и пароль, вернуть ID пользователя если
+        успешна аутентификация."""
         async with self.uow_factory() as uow:
             user = await uow.user.get_by_email(email)
             if user and verify_password(password, user.hashed_password):
@@ -93,6 +108,7 @@ class UserService(BaseService[CreateUserSchema, ReadUserSchema],
             user_id: int,
             avatar_path: str,
             ) -> schemas.UserBase | None:
+        """Обновить аватар пользователя, удалить старый файл, если он есть."""
         async with self.uow_factory() as uow:
             user = await uow.user.get_by_id(user_id)
             if user:
@@ -112,6 +128,7 @@ class UserService(BaseService[CreateUserSchema, ReadUserSchema],
             last_pasword: str,
             new_password: str,
             ) -> schemas.UserBase | None:
+        """Изменить пароль, проверив текущий."""
         async with self.uow_factory() as uow:
             user = await uow.user.get_by_id(user_id)
             if not user or not verify_password(
@@ -126,6 +143,7 @@ class UserService(BaseService[CreateUserSchema, ReadUserSchema],
             self,
             user_id: int
     ) -> schemas.UserWithFavorites | None:
+        """Получить пользователя вместе с его избранным."""
         async with self.uow_factory() as uow:
             user = await uow.user.get_with_favorites(user_id)
             if user:
@@ -136,5 +154,8 @@ class UserService(BaseService[CreateUserSchema, ReadUserSchema],
 class SourceUserService(
     BaseService[schemas.SourceUserCreate, schemas.SourceUserFromDB]
 ):
+    """
+    Сервис для работы с источниками пользователей.
+    """
     def __init__(self, uow_factory: Callable[[], IUnitOfWork]):
         super().__init__(uow_factory, "source_user", schemas.SourceUserFromDB)

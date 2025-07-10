@@ -49,6 +49,12 @@ async def create_user(
     user: schemas.UserCreate,
     user_service: UserService = Depends(get_users_service),
 ):
+    """
+    Регистрирует нового пользователя.
+
+    Returns:
+        None или BadRequestException, если пользователь уже существует.
+    """
     result = await user_service.create_user(user)
     if isinstance(result, str):
         return BadRequestException(result)
@@ -62,6 +68,9 @@ async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service: AuthService = Depends(get_auth_service),
 ):
+    """
+    Аутентифицирует пользователя и возвращает access токен.
+    """
     return await auth_service.login(form_data)
 
 
@@ -73,6 +82,9 @@ async def logout(
     token: Annotated[str, Depends(oauth2_scheme)],
     redis: Redis = Depends(get_redis_connection),
 ):
+    """
+    Удаляет токен из Redis и завершает сессию пользователя.
+    """
     await delete_token(redis, token)
 
 
@@ -98,6 +110,9 @@ async def update_user(
     user_token_id: int = Depends(check_user_access),
     user_service: UserService = Depends(get_users_service),
 ):
+    """
+    Обновляет профиль пользователя. Доступен только владельцу.
+    """
     user = await user_service.update(
         user_token_id,
         user_data,
@@ -114,6 +129,9 @@ async def delete_user(
     user_token_id: int = Depends(check_user_access),
     user_service: UserService = Depends(get_users_service),
 ):
+    """
+    Удаляет пользователя. Доступен только владельцу.
+    """
     await user_service.delete(user_token_id)
 
 
@@ -127,6 +145,9 @@ async def upload_user_avatar(
     user_token_id: int = Depends(check_user_access),
     user_service: UserService = Depends(get_users_service),
 ):
+    """
+    Загружает аватар пользователя. Доступен только владельцу.
+    """
     profile_image = await upload_image(file, AVATAR_DIR)
     return await user_service.update_user_avatar(
         user_token_id, profile_image['image'])
@@ -141,6 +162,9 @@ async def delete_user_avatar(
     user_token_id: int = Depends(check_user_access),
     user_service: UserService = Depends(get_users_service),
 ):
+    """
+    Удаляет аватар пользователя. Доступен только владельцу.
+    """
     return await user_service.update_user_avatar(user_token_id, '')
 
 
@@ -154,6 +178,12 @@ async def change_password(
     user_token_id: int = Depends(get_current_user),
     user_service: UserService = Depends(get_users_service),
 ):
+    """
+    Изменяет пароль пользователя. Требуется текущий и новый пароли.
+
+    Raises:
+        - BadRequestException: если текущий пароль неверный.
+    """
     try:
         user = await user_service.change_password(
             user_token_id,

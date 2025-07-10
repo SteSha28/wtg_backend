@@ -41,6 +41,10 @@ async def add_tag(
     admin_user=Depends(get_admin_user),
     tags_service: TagService = Depends(get_tags_service),
 ):
+    """
+    Создаёт новый тег.
+    Требуется аутентификация администратора.
+    """
     return await tags_service.create(tag)
 
 
@@ -54,6 +58,10 @@ async def update_tag(
     admin_user=Depends(get_admin_user),
     tags_service: TagService = Depends(get_tags_service),
 ):
+    """
+    Обновляет данные тега по ID.
+    Требуется аутентификация администратора.
+    """
     return await tags_service.update(
         tag_id,
         tag,
@@ -69,4 +77,8 @@ async def delete_tag(
     admin_user=Depends(get_admin_user),
     tags_service: TagService = Depends(get_tags_service),
 ):
+    """
+    Удаляет тег по ID.
+    Требуется аутентификация администратора.
+    """
     await tags_service.delete(tag_id)

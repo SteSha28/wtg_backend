@@ -16,6 +16,7 @@ from .database import Base
 
 
 class SourceUser(Base):
+    """Источник регистрации пользователя."""
     __tablename__ = "source_users"
 
     id: Mapped[int] = mapped_column(
@@ -38,6 +39,7 @@ class SourceUser(Base):
     )
 
 
+# Таблица для связи "избранное событие — пользователь"
 favorite_events = Table(
     'favorite_events',
     Base.metadata,
@@ -61,6 +63,7 @@ favorite_events = Table(
 
 
 class User(Base):
+    """Модель пользователя."""
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(
@@ -138,6 +141,7 @@ class User(Base):
 
 
 class Location(Base):
+    """Модель места проведения мероприятия."""
     __tablename__ = 'location'
 
     id: Mapped[int] = mapped_column(
@@ -166,6 +170,7 @@ class Location(Base):
 
 
 class Category(Base):
+    """Модель категории мероприятия (одна категория для мероприятия)."""
     __tablename__ = 'category'
 
     id: Mapped[int] = mapped_column(
@@ -186,6 +191,7 @@ class Category(Base):
         )
 
 
+# Таблица для связи "событие — тег"
 event_has_tag = Table(
     "event_tag",
     Base.metadata,
@@ -211,6 +217,7 @@ event_has_tag = Table(
 
 
 class Tag(Base):
+    """Модель тега мероприятия (несколько у одного мероприятия)."""
     __tablename__ = 'tag'
 
     id: Mapped[int] = mapped_column(
@@ -233,6 +240,7 @@ class Tag(Base):
 
 
 class EventDate(Base):
+    """Дата проведения события (может быть несколько на одно событие)."""
     __tablename__ = 'event_date'
 
     id: Mapped[int] = mapped_column(
@@ -258,6 +266,7 @@ class EventDate(Base):
 
 
 class Event(Base):
+    """Модель события."""
     __tablename__ = 'event'
 
     id: Mapped[int] = mapped_column(

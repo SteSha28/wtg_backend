@@ -5,7 +5,6 @@ from sqlalchemy import (
     and_, func, insert, select,
 )
 from sqlalchemy.orm import selectinload
-# from sqlalchemy.sql.expression import false
 
 from .base_repo import Repository
 from events_app.db.models import (
@@ -15,12 +14,27 @@ from events_app.schemas import SearchResult
 
 
 class EventRepository(Repository[Event]):
+    """
+    Репозиторий для работы с событиями.
+
+    Включает методы создания, поиска, фильтрации и обновления событий
+    с учётом тегов и дат.
+    """
     model = Event
 
     async def create(
             self,
             data: dict,
     ) -> Event | None:
+        """
+        Создаёт событие с тегами и датами.
+
+        Args:
+            - data: Словарь с данными события, включая 'tags' и 'dates'.
+
+        Returns:
+            - Event | None: Объект модели или None, если не создан.
+        """
         clean_data = data.copy()
         tags = clean_data.pop("tags", [])
         event_dates_data = clean_data.pop("dates", [])
@@ -44,6 +58,15 @@ class EventRepository(Repository[Event]):
             self,
             id: int,
     ) -> Event | None:
+        """Получить событие по ID
+        с загруженными связями (локация, категория, теги, даты).
+
+        Args:
+            - id (int): Идентификатор объекта.
+
+        Returns:
+            - Event | None: Объект модели или None, если не найден.
+        """
         stmt = (
             select(self.model)
             .where(self.model.id == id)
@@ -62,10 +85,26 @@ class EventRepository(Repository[Event]):
             offset: int,
             limit: int
     ) -> list[Event]:
+        """
+        Получить список всех событий с пагинацией.
+
+        Args:
+            - offset (int): Смещение для выборки.
+            - limit (int): Максимальное число событий.
+
+        Returns:
+            - list[Event]: Список событий.
+        """
         return await self._find_filtered(
             filters=[], offset=offset, limit=limit)
 
     async def count_all(self) -> int:
+        """
+        Подсчитать общее число событий.
+
+        Returns:
+            - int: Количество событий.
+        """
         return await self._count_filtered([])
 
     async def find_by_location(
@@ -74,6 +113,17 @@ class EventRepository(Repository[Event]):
             offset: int,
             limit: int,
     ) -> list[Event]:
+        """
+        Получить события по локации с пагинацией.
+
+        Args:
+            - location_id (int): ID локации.
+            - offset (int): Смещение для выборки.
+            - limit (int): Максимальное число событий.
+
+        Returns:
+            - list[Event]: Список событий.
+        """
         filters = [self.model.location_id == location_id]
         return await self._find_filtered(
             filters=filters,
@@ -85,6 +135,15 @@ class EventRepository(Repository[Event]):
             self,
             location_id: int,
     ) -> int:
+        """
+        Подсчитать количество событий в указанной локации.
+
+        Args:
+            - location_id (int): ID локации.
+
+        Returns:
+            - int: Количество событий.
+        """
         return await self._count_filtered(
             [self.model.location_id == location_id]
         )
@@ -95,6 +154,17 @@ class EventRepository(Repository[Event]):
             offset: int,
             limit: int,
     ) -> list[Event]:
+        """
+        Получить события по категории с пагинацией.
+
+        Args:
+            - category_id (int): ID категории.
+            - offset (int): Смещение для выборки.
+            - limit (int): Максимальное число событий.
+
+        Returns:
+            - list[Event]: Список событий.
+        """
         filters = [self.model.category_id == category_id]
         return await self._find_filtered(
             filters=filters,
@@ -103,6 +173,15 @@ class EventRepository(Repository[Event]):
         )
 
     async def count_by_category(self, category_id: int) -> int:
+        """
+        Подсчитать количество событий в указанной категории.
+
+        Args:
+            - category_id (int): ID категории.
+
+        Returns:
+            - int: Количество событий.
+        """
         return await self._count_filtered(
             [self.model.category_id == category_id]
         )
@@ -116,6 +195,20 @@ class EventRepository(Repository[Event]):
         offset: int,
         limit: int,
     ) -> list[Event]:
+        """
+        Получить события по фильтру даты с пагинацией.
+
+        Args:
+            - date (Optional[date]): Конкретная дата.
+            - date_from (Optional[date]): Начало диапазона дат.
+            - date_to (Optional[date]): Конец диапазона дат.
+            - hour (Optional[int]): Час в дате.
+            - offset (int): Смещение для выборки.
+            - limit (int): Максимальное число событий.
+
+        Returns:
+            - list[Event]: Список событий.
+        """
         filters = self._build_date_filters(
             date, date_from, date_to, hour)
         return await self._find_filtered(
@@ -131,6 +224,18 @@ class EventRepository(Repository[Event]):
         date_to: Optional[date],
         hour: Optional[int],
     ) -> int:
+        """
+        Подсчитать количество отфильтрованных событий.
+
+        Args:
+            - date (Optional[date]): Конкретная дата.
+            - date_from (Optional[date]): Начало диапазона дат.
+            - date_to (Optional[date]): Конец диапазона дат.
+            - hour (Optional[int]): Час в дате.
+
+        Returns:
+            - int: Количество событий.
+        """
         filters = self._build_date_filters(
             date, date_from, date_to, hour)
         return await self._count_filtered(filters)
@@ -140,6 +245,16 @@ class EventRepository(Repository[Event]):
             event: Event,
             image_path: str,
     ) -> Event:
+        """
+        Обновить изображение события.
+
+        Args:
+            - event (Event): Событие для обновления.
+            - image_path (str): Путь к новому изображению.
+
+        Returns:
+            - Event: Обновленное событие.
+        """
         event.event_image = image_path
         await self.session.flush()
         await self.session.refresh(event)
@@ -149,6 +264,15 @@ class EventRepository(Repository[Event]):
             self,
             query: str,
     ) -> list[SearchResult]:
+        """
+        Поиск событий и локаций по названию.
+
+        Args:
+            - query (str): Поисковый запрос.
+
+        Returns:
+            - list[SearchResult]: Список результатов поиска.
+        """
         like_expr = f"{query}%"
 
         events_stmt = (
@@ -175,13 +299,28 @@ class EventRepository(Repository[Event]):
         return event_results + location_results
 
     async def _add_tags(self, event_id: int, tag_ids: list[int]):
+        """
+        Добавить теги событию.
+
+        Args:
+            - event_id (int): ID события.
+            - tag_ids (list[int]): Список ID тегов.
+        """
         values = [
             {"event_id": event_id, "tag_id": tag_id}
             for tag_id in tag_ids
         ]
         await self.session.execute(insert(event_has_tag).values(values))
 
-    async def _add_event_dates(self, event_id: int, dates_data: list[datetime]):
+    async def _add_event_dates(
+            self, event_id: int, dates_data: list[datetime]):
+        """
+        Добавить даты события.
+
+        Args:
+            - event_id (int): ID события.
+            - dates_data (list[datetime]): Список дат.
+        """
         values = [
             {"event_id": event_id, "date": dt}
             for dt in dates_data
@@ -195,6 +334,17 @@ class EventRepository(Repository[Event]):
             offset: int,
             limit: int,
     ) -> list[Event]:
+        """
+        Получить события с применёнными фильтрами и пагинацией.
+
+        Args:
+            - filters (list): Список фильтров.
+            - offset (int): Смещение для выборки.
+            - limit (int): Максимальное число событий.
+
+        Returns:
+            - list[Event]: Список событий.
+        """
         upcoming_filter = self.model.closest_date >= datetime.now(timezone.utc)
         all_filters = [upcoming_filter] + filters
 
@@ -212,6 +362,15 @@ class EventRepository(Repository[Event]):
             self,
             filters: list,
     ) -> int:
+        """
+        Подсчитать количество событий с применёнными фильтрами.
+
+        Args:
+            - filters (list): Список SQLAlchemy фильтров.
+
+        Returns:
+            - int: Количество событий.
+        """
         upcoming_filter = self.model.closest_date >= datetime.now(timezone.utc)
         all_filters = [upcoming_filter] + filters
 
@@ -229,6 +388,18 @@ class EventRepository(Repository[Event]):
         date_to: Optional[date],
         hour: Optional[int],
     ) -> list:
+        """
+        Построить список фильтров по дате.
+
+        Args:
+            - date (Optional[date]): Конкретная дата.
+            - date_from (Optional[date]): Начало диапазона дат.
+            - date_to (Optional[date]): Конец диапазона дат.
+            - hour (Optional[int]): Час в дате.
+
+        Returns:
+            - list: Список фильтров.
+        """
         filters = []
 
         if date:
@@ -256,12 +427,15 @@ class EventRepository(Repository[Event]):
 
 
 class LocationRepository(Repository[Location]):
+    """Репозиторий для работы с локациями."""
     model = Location
 
 
 class CategoryRepository(Repository[Category]):
+    """Репозиторий для работы с категориями."""
     model = Category
 
 
 class TagRepository(Repository[Tag]):
+    """Репозиторий для работы с тегами."""
     model = Tag

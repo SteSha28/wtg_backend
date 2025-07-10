@@ -47,6 +47,20 @@ async def get_events_by_location(
     limit: int = Query(LIMIT, ge=1, le=1000),
     location_service: LocationService = Depends(get_locations_service),
 ):
+    """
+    Получить события по ID локации с пагинацией.
+    Args:
+        location_id (int): ID локации.
+        offset (int, optional): Смещение для пагинации. По умолчанию 0.
+        limit (int, optional): Лимит количества элементов. По умолчанию LIMIT.
+        location_service (LocationService): Сервис локаций.
+
+    Returns:
+        PaginatedResponse: Объект с общим количеством,
+        смещением, лимитом и списком событий.
+
+    Кеширование результата с использованием Redis.
+    """
     return await location_service.get_events_by_location(
         location_id, offset, limit)
 
@@ -60,6 +74,10 @@ async def add_location(
     admin_user=Depends(get_admin_user),
     location_service: LocationService = Depends(get_locations_service),
 ):
+    """
+    Создаёт новую локацию.
+    Требуется аутентификация администратора.
+    """
     return await location_service.create(location)
 
 
@@ -73,6 +91,10 @@ async def update_location(
     admin_user=Depends(get_admin_user),
     location_service: LocationService = Depends(get_locations_service),
 ):
+    """
+    Обновляет данные локации по ID.
+    Требуется аутентификация администратора.
+    """
     return await location_service.update(location_id, location)
 
 
@@ -85,4 +107,8 @@ async def delete_location(
     admin_user=Depends(get_admin_user),
     location_service: LocationService = Depends(get_locations_service),
 ):
+    """
+    Удаляет локацию по ID.
+    Требуется аутентификация администратора.
+    """
     return await location_service.delete(location_id)

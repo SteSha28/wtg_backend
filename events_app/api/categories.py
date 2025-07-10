@@ -47,6 +47,20 @@ async def get_events_by_category(
     limit: int = Query(LIMIT, ge=1, le=1000),
     category_service: CategoryService = Depends(get_categories_service),
 ):
+    """
+    Возвращает список событий для категории с пагинацией.
+
+    Args:
+        - category_id (int): ID категории.
+        - offset (int, optional): Смещение для пагинации. По умолчанию 0.
+        - limit (int, optional): Лимит количества элементов. По умолчанию
+            задано переменной LIMIT.
+        - category_service (CategoryService): Сервис категорий.
+
+    Returns:
+        - PaginatedResponse: Объект с общим количеством,
+            смещением, лимитом и списком событий.
+    """
     return await category_service.get_events_by_category(
         category_id, offset, limit)
 
@@ -60,6 +74,10 @@ async def add_category(
     admin_user=Depends(get_admin_user),
     category_service: CategoryService = Depends(get_categories_service),
 ):
+    """
+    Создаёт новую категорию.
+    Требуется аутентификация администратора.
+    """
     return await category_service.create(category)
 
 
@@ -73,6 +91,10 @@ async def update_category(
     admin_user=Depends(get_admin_user),
     category_service: CategoryService = Depends(get_categories_service),
 ):
+    """
+    Обновляет данные категории по ID.
+    Требуется аутентификация администратора.
+    """
     return await category_service.update(category_id, category)
 
 
@@ -85,4 +107,8 @@ async def delete_category(
     admin_user=Depends(get_admin_user),
     category_service: CategoryService = Depends(get_categories_service),
 ):
+    """
+    Удаляет категорию по ID.
+    Требуется аутентификация администратора.
+    """
     return await category_service.delete(category_id)

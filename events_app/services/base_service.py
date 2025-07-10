@@ -10,6 +10,16 @@ ReadSchema = TypeVar("ReadSchema", bound=BaseModel)
 
 
 class BaseService(Generic[CreateSchema, ReadSchema]):
+    """
+    Базовый сервис для работы с сущностями через Unit of Work и репозитории.
+
+    Args:
+        - uow_factory (Callable[[], IUnitOfWork]): Фабрика для
+            создания UnitOfWork.
+        - repo_attr (str): Имя атрибута репозитория в UnitOfWork.
+        - read_model (type[ReadSchema]): Pydantic-модель для валидации
+            возвращаемых данных.
+    """
     def __init__(
         self,
         uow_factory: Callable[[], IUnitOfWork],
@@ -24,12 +34,31 @@ class BaseService(Generic[CreateSchema, ReadSchema]):
             self,
             uow: IUnitOfWork,
     ) -> Repository:
+        """
+        Получить репозиторий из UnitOfWork по имени атрибута.
+
+        Args:
+            - uow (IUnitOfWork): Экземпляр UnitOfWork.
+
+        Returns:
+            - Repository: Репозиторий для работы с данными.
+        """
         return getattr(uow, self.repo_attr)
 
     async def create(
             self,
             create_schema: CreateSchema,
     ):
+        """
+        Создать объект в базе данных.
+
+        Args:
+            - create_schema (CreateSchema): Pydantic-схема с данными
+              для создания нового объекта.
+
+        Returns:
+            - ReadSchema: Созданный объект, валидированный Pydantic-моделью.
+        """
         async with self.uow_factory() as uow:
             repo = await self._get_repo(uow)
             db_obj = await repo.create(create_schema.model_dump())
@@ -39,6 +68,15 @@ class BaseService(Generic[CreateSchema, ReadSchema]):
             self,
             obj_id: int,
     ) -> ReadSchema | None:
+        """
+        Получить объект по ID.
+
+        Args:
+            - obj_id (int): Идентификатор объекта.
+
+        Returns:
+            - ReadSchema | None: Найденный объект или None.
+        """
         async with self.uow_factory() as uow:
             repo = await self._get_repo(uow)
             db_obj = await repo.get(obj_id)
@@ -51,6 +89,17 @@ class BaseService(Generic[CreateSchema, ReadSchema]):
             limit: int = LIMIT,
             offset: int = 0,
     ) -> list[ReadSchema]:
+        """
+        Получить список объектов с пагинацией.
+
+        Args:
+            - limit (int, optional): Лимит на количество объектов.
+                По умолчанию LIMIT.
+            - offset (int, optional): Смещение. По умолчанию 0.
+
+        Returns:
+            - list[ReadSchema]: Список валидированных объектов.
+        """
         async with self.uow_factory() as uow:
             repo = getattr(uow, self.repo_attr)
             objects = await repo.find_all(offset, limit)
@@ -61,6 +110,16 @@ class BaseService(Generic[CreateSchema, ReadSchema]):
             obj_id: int,
             update_schema: CreateSchema,
     ):
+        """
+        Обновить объект по ID.
+
+        Args:
+            - obj_id (int): Идентификатор обновляемого объекта.
+            - update_schema (CreateSchema): Данные для обновления.
+
+        Returns:
+            - ReadSchema | None: Обновлённый объект или None, если не найден.
+        """
         async with self.uow_factory() as uow:
             repo = await self._get_repo(uow)
             db_obj = await repo.get(obj_id)
@@ -75,7 +134,16 @@ class BaseService(Generic[CreateSchema, ReadSchema]):
     async def delete(
             self,
             obj_id: int,
-    ):
+    ) -> bool:
+        """
+        Удалить объект по ID.
+
+        Args:
+            - obj_id (int): Идентификатор удаляемого объекта.
+
+        Returns:
+            - bool: True если удалено, иначе False.
+        """
         async with self.uow_factory() as uow:
             repo = await self._get_repo(uow)
             db_obj = await repo.get(obj_id)

@@ -36,6 +36,20 @@ async def get_events(
     limit: int = Query(LIMIT, ge=1, le=1000),
     events_service: EventService = Depends(get_events_service),
 ):
+    """
+    Получить список мероприятий с поддержкой пагинации и
+    фильтрации по дате и времени.
+
+    Фильтрация:
+    - date: конкретная дата мероприятия
+    - date_from / date_to: диапазон дат (включительно)
+    - time: час начала (от 0 до 23)
+
+    Параметры пагинации:
+    - offset: смещение от начала списка. По умолчанию 0.
+    - limit: количество мероприятий (макс. 1000). По умолчанию
+        задано переменной LIMIT.
+    """
     if date or date_from or date_to or time:
         return await events_service.get_filtered(
             date, date_from, date_to, time, offset, limit)
@@ -51,6 +65,9 @@ async def autocomplete(
     query: str = Query(..., min_length=1),
     events_service: EventService = Depends(get_events_service),
 ):
+    """
+    Автодополнение по названию мероприятия или названию локации.
+    """
     return await events_service.search_autocomplete(query)
 
 
@@ -74,6 +91,10 @@ async def add_events(
     admin_user=Depends(get_admin_user),
     events_service: EventService = Depends(get_events_service),
 ):
+    """
+    Создаёт новое мероприятие.
+    Требуется аутентификация администратора.
+    """
     return await events_service.create(event)
 
 
@@ -87,6 +108,10 @@ async def update_event(
     admin_user=Depends(get_admin_user),
     events_service: EventService = Depends(get_events_service),
 ):
+    """
+    Обновляет данные о мероприятии по ID.
+    Требуется аутентификация администратора.
+    """
     return await events_service.update(
         event_id,
         event,
@@ -102,6 +127,10 @@ async def delete_event(
     admin_user=Depends(get_admin_user),
     events_service: EventService = Depends(get_events_service),
 ):
+    """
+    Удаляет мероприятие по ID.
+    Требуется аутентификация администратора.
+    """
     await events_service.delete(event_id)
 
 
@@ -115,6 +144,10 @@ async def upload_event_image(
     admin_user=Depends(get_admin_user),
     events_service: EventService = Depends(get_events_service),
 ):
+    """
+    Добавляет изображение мероприятия по ID.
+    Требуется аутентификация администратора.
+    """
     event_image = await upload_image(file, EVENTS_IMAGE_DIR)
     return await events_service.update_event_image(
         event_id,
@@ -131,4 +164,8 @@ async def delete_event_image(
     admin_user=Depends(get_admin_user),
     events_service: EventService = Depends(get_events_service),
 ):
+    """
+    Удаляет изображение мероприятия по ID.
+    Требуется аутентификация администратора.
+    """
     return await events_service.update_event_image(event_id, '')

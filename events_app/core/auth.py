@@ -15,6 +15,15 @@ credentials_exception = HTTPException(
 
 
 def create_jwt_token(data: dict):
+    """
+    Создаёт JWT токен на основе входных данных.
+
+    Args:
+        - data: Словарь с данными, которые нужно зашифровать.
+
+    Returns:
+        - str: JWT токен как строка.
+    """
     to_encode = data.copy()
     return encode(to_encode,
                   settings.SECRET_KEY,
@@ -22,6 +31,19 @@ def create_jwt_token(data: dict):
 
 
 def get_current_user_id(token) -> int:
+    """
+    Извлекает и возвращает user_id из JWT токена.
+
+    Args:
+        - token: JWT токен.
+
+    Returns:
+        - int: Идентификатор пользователя.
+
+    Raises:
+        - HTTPException: Если токен недействителен или не содержит user_id.
+        - InvalidTokenError: Если токен не прошёл проверку подлинности.
+    """
     try:
         payload = decode(token,
                          settings.SECRET_KEY,

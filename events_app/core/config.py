@@ -4,6 +4,10 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    """
+    Конфигурация приложения, загружаемая из переменных окружения (.env).
+    Использует pydantic для валидации и типизации.
+    """
     DB_HOST: str
     DB_PORT: str
     DB_USER: str
@@ -22,6 +26,9 @@ class Settings(BaseSettings):
 
     @property
     def ASYNC_DATABASE_URL(self):
+        """
+        Возвращает асинхронную строку подключения к базе данных PostgreSQL.
+        """
         return (
             f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
         )
